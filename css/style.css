@@ -1,0 +1,45 @@
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #60A5FA 0%, #1D4ED8 50%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+/* ── Glassmorphism card ── */
+.glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(96,165,250,0.2);
+}
+/* ── Neon glow ── */
+.glow { box-shadow: 0 0 20px rgba(59,130,246,0.4), 0 0 40px rgba(59,130,246,0.2); }
+.glow-text { text-shadow: 0 0 20px rgba(96,165,250,0.6); }
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0F172A; }
+::-webkit-scrollbar-thumb { background: #1D4ED8; border-radius: 3px; }
+/* ── Particles canvas ── */
+#particles { position: absolute; inset: 0; pointer-events: none; }
+/* ── Nav link hover ── */
+.nav-link::after {
+  content: ''; display: block; height: 2px;
+  background: #60A5FA; transform: scaleX(0);
+  transition: transform 0.3s ease; border-radius: 2px;
+}
+.nav-link:hover::after, .nav-link.active::after { transform: scaleX(1); }
+/* ── Skill bar ── */
+.skill-bar { transition: width 1.4s cubic-bezier(.4,0,.2,1); }
+/* ── Card hover lift ── */
+.card-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card-lift:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(29,78,216,0.3); }
+/* ── Typing cursor ── */
+#typed::after { content: '|'; animation: blink 0.8s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+/* ── Mobile menu ── */
+#mobile-menu { transition: max-height 0.4s ease, opacity 0.4s ease; max-height: 0; opacity: 0; overflow: hidden; }
+#mobile-menu.open { max-height: 400px; opacity: 1; }
+/* ── Section reveal ── */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+/* ── Progress ring ── */
+.progress-ring__circle { transition: stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1); transform: rotate(-90deg); transform-origin: 50% 50%; }
