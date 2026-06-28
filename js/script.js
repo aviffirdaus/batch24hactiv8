@@ -132,3 +132,147 @@ window.addEventListener('scroll', () => {
   backTop.classList.toggle('pointer-events-auto', show); backTop.classList.toggle('pointer-events-none', !show);
 });
 backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+/* ── Chatbot ── */
+(function () {
+  const CHAT_API = 'http://localhost:3000/chat';
+  const toggle   = document.getElementById('chat-toggle');
+  const window_  = document.getElementById('chat-window');
+  const closeBtn = document.getElementById('chat-close-btn');
+  const messages = document.getElementById('chat-messages');
+  const input    = document.getElementById('chat-input');
+  const sendBtn  = document.getElementById('chat-send');
+  const iconOpen = document.getElementById('chat-icon-open');
+  const iconClose= document.getElementById('chat-icon-close');
+  const notifDot = toggle.querySelector('span');
+  const chips    = document.getElementById('chat-suggestions');
+
+  let isOpen = false;
+  let isLoading = false;
+  let history = [];
+
+  function openChat() {
+    isOpen = true;
+    window_.classList.add('open');
+    iconOpen.classList.add('hidden');
+    iconClose.classList.remove('hidden');
+    if (notifDot) notifDot.remove();
+    input.focus();
+  }
+
+  function closeChat() {
+    isOpen = false;
+    window_.classList.remove('open');
+    iconOpen.classList.remove('hidden');
+    iconClose.classList.add('hidden');
+  }
+
+  toggle.addEventListener('click', () => isOpen ? closeChat() : openChat());
+  closeBtn.addEventListener('click', closeChat);
+
+  function renderMarkdown(str) {
+    let s = str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    s = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(?:^|\n)\* (.*)/g, (_, p) => '<br>• ' + p);
+    s = s.replace(/\n/g, '<br>');
+    return s;
+  }
+
+  function appendBotMessage(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'flex items-start gap-2.5 chat-msg-bot';
+    wrap.innerHTML = `
+      <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <div class="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[82%]">
+        <p class="chat-bot-text text-gray-800 text-sm leading-relaxed">${renderMarkdown(text)}</p>
+      </div>`;
+    messages.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function appendUserMessage(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'flex justify-end chat-msg-user';
+    wrap.innerHTML = `
+      <div class="bg-blue-600 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[82%]">
+        <p class="text-white text-sm leading-relaxed">${escHtml(text)}</p>
+      </div>`;
+    messages.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function showTyping() {
+    const wrap = document.createElement('div');
+    wrap.id = 'chat-typing';
+    wrap.className = 'flex items-start gap-2.5';
+    wrap.innerHTML = `
+      <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <div class="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
+        <span class="chat-typing-dot"></span>
+        <span class="chat-typing-dot"></span>
+        <span class="chat-typing-dot"></span>
+      </div>`;
+    messages.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('chat-typing');
+    if (el) el.remove();
+  }
+
+  function scrollBottom() {
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function sendMessage(text) {
+    if (!text.trim() || isLoading) return;
+    if (chips) chips.remove();
+
+    isLoading = true;
+    sendBtn.disabled = true;
+    input.value = '';
+
+    appendUserMessage(text);
+    showTyping();
+
+    try {
+      const res = await fetch(CHAT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history }),
+      });
+      const data = await res.json();
+      removeTyping();
+
+      const reply = res.ok ? data.result : 'Maaf, terjadi kesalahan. Coba lagi ya!';
+      appendBotMessage(reply);
+
+      history.push({ role: 'user', text });
+      history.push({ role: 'model', text: reply });
+      if (history.length > 20) history = history.slice(-20);
+    } catch (_) {
+      removeTyping();
+      appendBotMessage('Koneksi gagal. Pastikan server API sudah berjalan.');
+    }
+
+    isLoading = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+
+  sendBtn.addEventListener('click', () => sendMessage(input.value));
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); } });
+
+  document.querySelectorAll('.chat-chip').forEach(chip => {
+    chip.addEventListener('click', () => { openChat(); sendMessage(chip.textContent); });
+  });
+})();

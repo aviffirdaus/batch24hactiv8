@@ -1,0 +1,14 @@
+# Editor history
+.history/
+
+# Environment variables
+.env
+gemini-flash-api/.env
+
+# Node modules
+node_modules/
+gemini-flash-api/node_modules/
+
+# Lock files
+package-lock.json
+gemini-flash-api/package-lock.json
